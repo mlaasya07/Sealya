@@ -82,8 +82,8 @@ For licensing inquiries or collaboration, please contact the author directly.
 ## 🧠 Author & Contact
 
 **Made with calm & care** by M.Laasya 
-Email: [mlaasy16@gmail.com]  
-Devpost: 🔗 Visit my Devpost https://devpost.com/mlaasy16?ref_content=user-portfolio&ref_feature=portfolio&ref_medium=global-nav
+Email: mlaasy16@gmail.com
+Devpost: ( https://devpost.com/mlaasy16?ref_content=user-portfolio&ref_feature=portfolio&ref_medium=global-nav )
 
 ---
 
