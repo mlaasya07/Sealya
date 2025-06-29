@@ -41,7 +41,7 @@
 ---
 
 ## 📸 Youtube Link
-> [Watch the demo on YouTube] (https://youtu.be/SYUp9PHAfVo)
+> [Watch the demo on YouTube](https://youtu.be/SYUp9PHAfVo)
 
 ---
 
