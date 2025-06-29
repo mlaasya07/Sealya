@@ -4,6 +4,7 @@ import { useLetters } from './hooks/useLetters';
 import { Letter, EmojiSeal } from './types/Letter';
 import { ThemeProvider } from './contexts/ThemeContext';
 import { SoundscapeProvider } from './contexts/SoundscapeContext';
+import { PremiumProvider, usePremium } from './contexts/PremiumContext';
 import { Header } from './components/Header';
 import { Hero } from './components/Hero';
 import { LetterLibrary } from './components/LetterLibrary';
@@ -13,17 +14,25 @@ import { ProfileModal } from './components/ProfileModal';
 import { SettingsModal } from './components/SettingsModal';
 import { OnboardingFlow } from './components/OnboardingFlow';
 import { FloatingActionButton } from './components/FloatingActionButton';
+import { PremiumModal } from './components/PremiumModal';
+import { UsageLimitModal } from './components/UsageLimitModal';
 import { generateLetterPDF } from './utils/pdfExport';
 
 function AppContent() {
   const { letters, addLetter, deleteLetter, toggleFavorite, undoSeal } = useLetters();
+  const { canCreateLetter, canScheduleLetter } = usePremium();
   const [isWriterOpen, setIsWriterOpen] = useState(false);
   const [selectedLetter, setSelectedLetter] = useState<Letter | null>(null);
   const [isLetterModalOpen, setIsLetterModalOpen] = useState(false);
   const [isProfileModalOpen, setIsProfileModalOpen] = useState(false);
   const [isSettingsModalOpen, setIsSettingsModalOpen] = useState(false);
+  const [isPremiumModalOpen, setIsPremiumModalOpen] = useState(false);
   const [isOnboardingOpen, setIsOnboardingOpen] = useState(false);
   const [showUndoNotification, setShowUndoNotification] = useState<Letter | null>(null);
+  const [usageLimitModal, setUsageLimitModal] = useState<{
+    isOpen: boolean;
+    type: 'letters' | 'scheduled';
+  }>({ isOpen: false, type: 'letters' });
 
   // Check if onboarding should be shown
   useEffect(() => {
@@ -33,7 +42,26 @@ function AppContent() {
     }
   }, []);
 
+  const handleWriteClick = () => {
+    if (!canCreateLetter()) {
+      setUsageLimitModal({ isOpen: true, type: 'letters' });
+      return;
+    }
+    setIsWriterOpen(true);
+  };
+
   const handleSealLetter = (title: string, label: string, content: string, emoji: EmojiSeal, scheduledFor?: Date) => {
+    // Check limits before creating
+    if (!canCreateLetter()) {
+      setUsageLimitModal({ isOpen: true, type: 'letters' });
+      return;
+    }
+
+    if (scheduledFor && !canScheduleLetter()) {
+      setUsageLimitModal({ isOpen: true, type: 'scheduled' });
+      return;
+    }
+
     const newLetter = addLetter({
       title,
       label,
@@ -92,10 +120,11 @@ function AppContent() {
         letters={letters} 
         onProfileClick={() => setIsProfileModalOpen(true)}
         onSettingsClick={() => setIsSettingsModalOpen(true)}
+        onPremiumClick={() => setIsPremiumModalOpen(true)}
       />
       
       <main>
-        <Hero onWriteClick={() => setIsWriterOpen(true)} />
+        <Hero onWriteClick={handleWriteClick} />
         <LetterLibrary
           letters={letters}
           onLetterClick={handleLetterClick}
@@ -105,7 +134,7 @@ function AppContent() {
         />
       </main>
 
-      <FloatingActionButton onClick={() => setIsWriterOpen(true)} />
+      <FloatingActionButton onClick={handleWriteClick} />
 
       {/* Undo Notification */}
       {showUndoNotification && (
@@ -159,6 +188,18 @@ function AppContent() {
       <SettingsModal
         isOpen={isSettingsModalOpen}
         onClose={() => setIsSettingsModalOpen(false)}
+      />
+
+      <PremiumModal
+        isOpen={isPremiumModalOpen}
+        onClose={() => setIsPremiumModalOpen(false)}
+      />
+
+      <UsageLimitModal
+        isOpen={usageLimitModal.isOpen}
+        onClose={() => setUsageLimitModal({ isOpen: false, type: 'letters' })}
+        onUpgrade={() => setIsPremiumModalOpen(true)}
+        limitType={usageLimitModal.type}
       />
 
       <OnboardingFlow
@@ -216,7 +257,9 @@ function App() {
   return (
     <ThemeProvider>
       <SoundscapeProvider>
-        <AppContent />
+        <PremiumProvider>
+          <AppContent />
+        </PremiumProvider>
       </SoundscapeProvider>
     </ThemeProvider>
   );
