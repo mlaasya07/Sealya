@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { X, Crown, Star, Zap, Check, Sparkles } from 'lucide-react';
+import { X, Crown, Star, Zap, Check, Sparkles, IndianRupee } from 'lucide-react';
 import { SUBSCRIPTION_TIERS, PREMIUM_THEMES, CUSTOM_SEALS } from '../types/Premium';
 import { usePremium } from '../contexts/PremiumContext';
 
@@ -30,6 +30,13 @@ export const PremiumModal: React.FC<PremiumModalProps> = ({
     { id: 'themes', label: 'Premium Themes', icon: Sparkles },
     { id: 'seals', label: 'Custom Seals', icon: Star }
   ];
+
+  const formatPrice = (price: number) => {
+    if (price >= 100) {
+      return `₹${price}`;
+    }
+    return `$${price}`;
+  };
 
   return (
     <AnimatePresence>
@@ -135,9 +142,11 @@ export const PremiumModal: React.FC<PremiumModalProps> = ({
                       <div className="text-center mb-6">
                         <h3 className="text-2xl font-bold text-gray-900 dark:text-white mb-2">{tier.name}</h3>
                         <div className="text-4xl font-bold text-purple-600 dark:text-purple-400 mb-1">
-                          ${tier.price}
+                          {formatPrice(tier.price)}
                         </div>
-                        <div className="text-gray-600 dark:text-gray-400 font-mono text-sm">per month</div>
+                        <div className="text-gray-600 dark:text-gray-400 font-mono text-sm">
+                          {tier.price === 0 ? 'Forever free' : 'per month'}
+                        </div>
                       </div>
 
                       <ul className="space-y-3 mb-6">
@@ -157,6 +166,8 @@ export const PremiumModal: React.FC<PremiumModalProps> = ({
                             ? 'bg-gray-200 dark:bg-gray-700 text-gray-500 dark:text-gray-400 cursor-not-allowed'
                             : tier.popular
                             ? 'bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 text-white shadow-lg hover:shadow-xl'
+                            : tier.price === 0
+                            ? 'bg-gray-200 dark:bg-gray-700 text-gray-500 dark:text-gray-400 cursor-not-allowed'
                             : 'bg-gray-900 dark:bg-white hover:bg-gray-800 dark:hover:bg-gray-100 text-white dark:text-gray-900'
                         }`}
                       >
@@ -168,7 +179,7 @@ export const PremiumModal: React.FC<PremiumModalProps> = ({
               )}
 
               {activeTab === 'themes' && (
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                   {PREMIUM_THEMES.map((theme) => (
                     <motion.div
                       key={theme.id}
@@ -183,10 +194,13 @@ export const PremiumModal: React.FC<PremiumModalProps> = ({
                       </div>
                       <div className="p-4">
                         <h3 className="font-bold text-gray-900 dark:text-white mb-1">{theme.name}</h3>
-                        <p className="text-sm text-gray-600 dark:text-gray-400 mb-3">{theme.description}</p>
+                        <p className="text-sm text-gray-600 dark:text-gray-400 mb-3 capitalize">
+                          {theme.category} • {theme.description}
+                        </p>
                         <div className="flex items-center justify-between">
-                          <span className="text-lg font-bold text-purple-600 dark:text-purple-400">
-                            ${theme.price}
+                          <span className="text-lg font-bold text-purple-600 dark:text-purple-400 flex items-center">
+                            <IndianRupee className="w-4 h-4 mr-1" />
+                            {theme.price}
                           </span>
                           <button className="bg-purple-600 hover:bg-purple-700 text-white px-4 py-2 rounded-lg text-sm font-mono transition-colors">
                             Purchase
@@ -216,8 +230,9 @@ export const PremiumModal: React.FC<PremiumModalProps> = ({
                         {seal.style}
                       </div>
                       <div className="flex flex-col space-y-2">
-                        <span className="text-sm font-bold text-purple-600 dark:text-purple-400">
-                          ${seal.price}
+                        <span className="text-sm font-bold text-purple-600 dark:text-purple-400 flex items-center justify-center">
+                          <IndianRupee className="w-3 h-3 mr-1" />
+                          {seal.price}
                         </span>
                         <button className="bg-purple-600 hover:bg-purple-700 text-white px-3 py-1 rounded text-xs font-mono transition-colors">
                           Buy
