@@ -20,7 +20,7 @@ import { generateLetterPDF } from './utils/pdfExport';
 
 function AppContent() {
   const { letters, addLetter, deleteLetter, toggleFavorite, undoSeal } = useLetters();
-  const { canCreateLetter, canScheduleLetter } = usePremium();
+  const { canCreateLetter, canScheduleLetter, removeBranding } = usePremium();
   const [isWriterOpen, setIsWriterOpen] = useState(false);
   const [selectedLetter, setSelectedLetter] = useState<Letter | null>(null);
   const [isLetterModalOpen, setIsLetterModalOpen] = useState(false);
@@ -61,6 +61,32 @@ function AppContent() {
       setUsageLimitModal({ isOpen: true, type: 'scheduled' });
       return;
     }
+
+    // Update usage stats
+    const savedStats = localStorage.getItem('sealya-usage-stats');
+    const now = new Date();
+    const currentMonth = `${now.getFullYear()}-${now.getMonth()}`;
+    
+    let stats = {
+      month: currentMonth,
+      lettersThisMonth: 0,
+      scheduledLetters: 0
+    };
+
+    if (savedStats) {
+      const parsed = JSON.parse(savedStats);
+      if (parsed.month === currentMonth) {
+        stats = parsed;
+      }
+    }
+
+    // Increment counters
+    stats.lettersThisMonth += 1;
+    if (scheduledFor) {
+      stats.scheduledLetters += 1;
+    }
+
+    localStorage.setItem('sealya-usage-stats', JSON.stringify(stats));
 
     const newLetter = addLetter({
       title,
@@ -110,6 +136,19 @@ function AppContent() {
   };
 
   const handleUndoSeal = (letter: Letter) => {
+    // Update usage stats when undoing
+    const savedStats = localStorage.getItem('sealya-usage-stats');
+    if (savedStats) {
+      const stats = JSON.parse(savedStats);
+      if (stats.lettersThisMonth > 0) {
+        stats.lettersThisMonth -= 1;
+      }
+      if (letter.scheduledFor && stats.scheduledLetters > 0) {
+        stats.scheduledLetters -= 1;
+      }
+      localStorage.setItem('sealya-usage-stats', JSON.stringify(stats));
+    }
+
     undoSeal(letter.id);
     setShowUndoNotification(null);
   };
@@ -249,6 +288,13 @@ function AppContent() {
           }}
         />
       </div>
+
+      {/* Branding Footer (only for free users) */}
+      {!removeBranding() && (
+        <div className="fixed bottom-2 right-2 text-xs text-pink-400 dark:text-fuchsia-500 font-mono opacity-60">
+          Sent via Sealya
+        </div>
+      )}
     </div>
   );
 }

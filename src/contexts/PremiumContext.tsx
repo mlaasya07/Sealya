@@ -1,6 +1,13 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { UserSubscription, SubscriptionTier, SUBSCRIPTION_TIERS } from '../types/Premium';
 
+interface UpgradeResult {
+  success: boolean;
+  tier: string;
+  unlockedFeatures: string[];
+  message: string;
+}
+
 interface PremiumContextType {
   subscription: UserSubscription | null;
   hasFeature: (feature: string) => boolean;
@@ -8,13 +15,21 @@ interface PremiumContextType {
   canScheduleLetter: () => boolean;
   canUseTheme: (themeId: string) => boolean;
   canUseCustomSeal: (sealId: string) => boolean;
+  canAttachMedia: () => boolean;
+  canPasswordProtect: () => boolean;
+  canBulkExport: () => boolean;
+  hasAdvancedAnalytics: () => boolean;
+  hasPrioritySupport: () => boolean;
+  hasEarlyAccess: () => boolean;
+  removeBranding: () => boolean;
   getUsageStats: () => {
     lettersThisMonth: number;
     scheduledLetters: number;
     maxLetters: number | 'unlimited';
     maxScheduled: number | 'unlimited';
   };
-  upgradeToPremium: (tierId: string) => void;
+  upgradeToPremium: (tierId: string) => Promise<UpgradeResult>;
+  getAccountHistory: () => any[];
 }
 
 const PremiumContext = createContext<PremiumContextType | undefined>(undefined);
@@ -116,19 +131,106 @@ export const PremiumProvider: React.FC<{ children: React.ReactNode }> = ({ child
     return currentTier.id !== 'free';
   };
 
-  const upgradeToPremium = (tierId: string) => {
-    const tier = SUBSCRIPTION_TIERS.find(t => t.id === tierId);
-    if (!tier) return;
+  // Plus and Pro specific features
+  const canAttachMedia = (): boolean => {
+    return subscription?.tier === 'pro';
+  };
 
-    const newSubscription: UserSubscription = {
+  const canPasswordProtect = (): boolean => {
+    return subscription?.tier === 'pro';
+  };
+
+  const canBulkExport = (): boolean => {
+    return subscription?.tier === 'pro';
+  };
+
+  const hasAdvancedAnalytics = (): boolean => {
+    return subscription?.tier === 'pro';
+  };
+
+  const hasPrioritySupport = (): boolean => {
+    return subscription?.tier === 'plus' || subscription?.tier === 'pro';
+  };
+
+  const hasEarlyAccess = (): boolean => {
+    return subscription?.tier === 'plus' || subscription?.tier === 'pro';
+  };
+
+  const removeBranding = (): boolean => {
+    return subscription?.tier === 'plus' || subscription?.tier === 'pro';
+  };
+
+  const logUpgradeEvent = (tierId: string, features: string[]) => {
+    const history = getAccountHistory();
+    const newEvent = {
+      id: crypto.randomUUID(),
+      type: 'upgrade',
       tier: tierId,
-      status: 'active',
-      expiresAt: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000), // 30 days from now
-      features: tier.features
+      features,
+      timestamp: new Date().toISOString(),
+      description: `Upgraded to ${tierId.charAt(0).toUpperCase() + tierId.slice(1)} plan`
     };
+    
+    const updatedHistory = [newEvent, ...history];
+    localStorage.setItem('sealya-account-history', JSON.stringify(updatedHistory));
+  };
 
-    setSubscription(newSubscription);
-    localStorage.setItem('sealya-subscription', JSON.stringify(newSubscription));
+  const getAccountHistory = () => {
+    const saved = localStorage.getItem('sealya-account-history');
+    return saved ? JSON.parse(saved) : [];
+  };
+
+  const upgradeToPremium = async (tierId: string): Promise<UpgradeResult> => {
+    const tier = SUBSCRIPTION_TIERS.find(t => t.id === tierId);
+    if (!tier) {
+      return {
+        success: false,
+        tier: tierId,
+        unlockedFeatures: [],
+        message: 'Invalid subscription tier'
+      };
+    }
+
+    try {
+      // Simulate payment processing
+      await new Promise(resolve => setTimeout(resolve, 1500));
+
+      const newSubscription: UserSubscription = {
+        tier: tierId,
+        status: 'active',
+        expiresAt: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000), // 30 days from now
+        features: tier.features
+      };
+
+      // Update subscription immediately
+      setSubscription(newSubscription);
+      localStorage.setItem('sealya-subscription', JSON.stringify(newSubscription));
+
+      // Log the upgrade event
+      logUpgradeEvent(tierId, tier.features);
+
+      // Update usage stats to reflect new limits immediately
+      const currentStats = getUsageStats();
+      localStorage.setItem('sealya-usage-stats', JSON.stringify({
+        ...currentStats,
+        tier: tierId,
+        upgradeDate: new Date().toISOString()
+      }));
+
+      return {
+        success: true,
+        tier: tierId,
+        unlockedFeatures: tier.features,
+        message: `Successfully upgraded to ${tier.name}! All features are now active.`
+      };
+    } catch (error) {
+      return {
+        success: false,
+        tier: tierId,
+        unlockedFeatures: [],
+        message: 'Payment processing failed. Please try again.'
+      };
+    }
   };
 
   return (
@@ -139,8 +241,16 @@ export const PremiumProvider: React.FC<{ children: React.ReactNode }> = ({ child
       canScheduleLetter,
       canUseTheme,
       canUseCustomSeal,
+      canAttachMedia,
+      canPasswordProtect,
+      canBulkExport,
+      hasAdvancedAnalytics,
+      hasPrioritySupport,
+      hasEarlyAccess,
+      removeBranding,
       getUsageStats,
       upgradeToPremium,
+      getAccountHistory,
     }}>
       {children}
     </PremiumContext.Provider>
