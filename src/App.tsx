@@ -5,6 +5,7 @@ import { Letter, EmojiSeal } from './types/Letter';
 import { ThemeProvider } from './contexts/ThemeContext';
 import { SoundscapeProvider } from './contexts/SoundscapeContext';
 import { PremiumProvider, usePremium } from './contexts/PremiumContext';
+import { AuthProvider, useAuth } from './contexts/AuthContext';
 import { Header } from './components/Header';
 import { Hero } from './components/Hero';
 import { LetterLibrary } from './components/LetterLibrary';
@@ -16,17 +17,20 @@ import { OnboardingFlow } from './components/OnboardingFlow';
 import { FloatingActionButton } from './components/FloatingActionButton';
 import { PremiumModal } from './components/PremiumModal';
 import { UsageLimitModal } from './components/UsageLimitModal';
+import { LoginModal } from './components/LoginModal';
 import { generateLetterPDF } from './utils/pdfExport';
 
 function AppContent() {
   const { letters, addLetter, deleteLetter, toggleFavorite, undoSeal } = useLetters();
   const { canCreateLetter, canScheduleLetter, removeBranding } = usePremium();
+  const { isLoggedIn, isLoading } = useAuth();
   const [isWriterOpen, setIsWriterOpen] = useState(false);
   const [selectedLetter, setSelectedLetter] = useState<Letter | null>(null);
   const [isLetterModalOpen, setIsLetterModalOpen] = useState(false);
   const [isProfileModalOpen, setIsProfileModalOpen] = useState(false);
   const [isSettingsModalOpen, setIsSettingsModalOpen] = useState(false);
   const [isPremiumModalOpen, setIsPremiumModalOpen] = useState(false);
+  const [isLoginModalOpen, setIsLoginModalOpen] = useState(false);
   const [isOnboardingOpen, setIsOnboardingOpen] = useState(false);
   const [showUndoNotification, setShowUndoNotification] = useState<Letter | null>(null);
   const [usageLimitModal, setUsageLimitModal] = useState<{
@@ -34,15 +38,23 @@ function AppContent() {
     type: 'letters' | 'scheduled';
   }>({ isOpen: false, type: 'letters' });
 
-  // Check if onboarding should be shown
+  // Check if onboarding should be shown (only for logged-in users)
   useEffect(() => {
-    const onboardingCompleted = localStorage.getItem('sealya-onboarding-completed');
-    if (!onboardingCompleted) {
-      setIsOnboardingOpen(true);
+    if (isLoggedIn) {
+      const onboardingCompleted = localStorage.getItem('sealya-onboarding-completed');
+      if (!onboardingCompleted) {
+        setIsOnboardingOpen(true);
+      }
     }
-  }, []);
+  }, [isLoggedIn]);
 
+  // Show login modal if not logged in and trying to access features
   const handleWriteClick = () => {
+    if (!isLoggedIn) {
+      setIsLoginModalOpen(true);
+      return;
+    }
+
     if (!canCreateLetter()) {
       setUsageLimitModal({ isOpen: true, type: 'letters' });
       return;
@@ -51,6 +63,11 @@ function AppContent() {
   };
 
   const handleSealLetter = (title: string, label: string, content: string, emoji: EmojiSeal, scheduledFor?: Date) => {
+    if (!isLoggedIn) {
+      setIsLoginModalOpen(true);
+      return;
+    }
+
     // Check limits before creating
     if (!canCreateLetter()) {
       setUsageLimitModal({ isOpen: true, type: 'letters' });
@@ -112,6 +129,11 @@ function AppContent() {
   };
 
   const handleLetterClick = (letter: Letter) => {
+    if (!isLoggedIn) {
+      setIsLoginModalOpen(true);
+      return;
+    }
+
     // Check if letter is locked
     if (letter.scheduledFor && new Date() < new Date(letter.scheduledFor)) {
       return; // Don't open locked letters
@@ -153,6 +175,34 @@ function AppContent() {
     setShowUndoNotification(null);
   };
 
+  // Show loading screen while checking auth
+  if (isLoading) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-pink-50 via-white to-rose-50 dark:from-black dark:via-gray-900 dark:to-black 
+                      flex items-center justify-center">
+        <motion.div
+          initial={{ opacity: 0, scale: 0.8 }}
+          animate={{ opacity: 1, scale: 1 }}
+          className="text-center"
+        >
+          <motion.div
+            animate={{ rotate: 360 }}
+            transition={{ duration: 2, repeat: Infinity, ease: "linear" }}
+            className="text-6xl mb-4"
+          >
+            💌
+          </motion.div>
+          <h2 className="text-2xl font-bold text-pink-900 dark:text-fuchsia-100 mb-2">
+            Loading Sealya
+          </h2>
+          <p className="text-pink-600 dark:text-fuchsia-300 font-mono">
+            Preparing your sanctuary...
+          </p>
+        </motion.div>
+      </div>
+    );
+  }
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-pink-50 via-white to-rose-50 dark:from-black dark:via-gray-900 dark:to-black transition-colors duration-300">
       <Header 
@@ -160,20 +210,23 @@ function AppContent() {
         onProfileClick={() => setIsProfileModalOpen(true)}
         onSettingsClick={() => setIsSettingsModalOpen(true)}
         onPremiumClick={() => setIsPremiumModalOpen(true)}
+        onLoginClick={() => setIsLoginModalOpen(true)}
       />
       
       <main>
         <Hero onWriteClick={handleWriteClick} />
-        <LetterLibrary
-          letters={letters}
-          onLetterClick={handleLetterClick}
-          onPrintLetter={handlePrintLetter}
-          onDeleteLetter={handleDeleteLetter}
-          onToggleFavorite={toggleFavorite}
-        />
+        {isLoggedIn && (
+          <LetterLibrary
+            letters={letters}
+            onLetterClick={handleLetterClick}
+            onPrintLetter={handlePrintLetter}
+            onDeleteLetter={handleDeleteLetter}
+            onToggleFavorite={toggleFavorite}
+          />
+        )}
       </main>
 
-      <FloatingActionButton onClick={handleWriteClick} />
+      {isLoggedIn && <FloatingActionButton onClick={handleWriteClick} />}
 
       {/* Undo Notification */}
       {showUndoNotification && (
@@ -241,11 +294,23 @@ function AppContent() {
         limitType={usageLimitModal.type}
       />
 
+      <LoginModal
+        isOpen={isLoginModalOpen}
+        onClose={() => setIsLoginModalOpen(false)}
+      />
+
       <OnboardingFlow
         isOpen={isOnboardingOpen}
         onClose={() => setIsOnboardingOpen(false)}
         onComplete={() => setIsOnboardingOpen(false)}
       />
+
+      {/* Branding Footer (only for free users) */}
+      {!removeBranding() && (
+        <div className="fixed bottom-2 right-2 text-xs text-pink-400 dark:text-fuchsia-500 font-mono opacity-60">
+          Sent via Sealya
+        </div>
+      )}
 
       {/* Background Elements */}
       <div className="fixed inset-0 overflow-hidden pointer-events-none">
@@ -288,13 +353,6 @@ function AppContent() {
           }}
         />
       </div>
-
-      {/* Branding Footer (only for free users) */}
-      {!removeBranding() && (
-        <div className="fixed bottom-2 right-2 text-xs text-pink-400 dark:text-fuchsia-500 font-mono opacity-60">
-          Sent via Sealya
-        </div>
-      )}
     </div>
   );
 }
@@ -303,9 +361,11 @@ function App() {
   return (
     <ThemeProvider>
       <SoundscapeProvider>
-        <PremiumProvider>
-          <AppContent />
-        </PremiumProvider>
+        <AuthProvider>
+          <PremiumProvider>
+            <AppContent />
+          </PremiumProvider>
+        </AuthProvider>
       </SoundscapeProvider>
     </ThemeProvider>
   );
