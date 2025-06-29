@@ -83,11 +83,11 @@ export const PremiumModal: React.FC<PremiumModalProps> = ({
               initial={{ opacity: 0, scale: 0.9, y: 20 }}
               animate={{ opacity: 1, scale: 1, y: 0 }}
               exit={{ opacity: 0, scale: 0.9, y: 20 }}
-              className="bg-white dark:bg-gray-900 rounded-3xl shadow-2xl max-w-6xl w-full max-h-[90vh] overflow-hidden"
+              className="bg-white dark:bg-gray-900 rounded-3xl shadow-2xl max-w-6xl w-full h-[90vh] flex flex-col overflow-hidden"
               onClick={(e) => e.stopPropagation()}
             >
               {/* Header */}
-              <div className="relative bg-gradient-to-r from-purple-600 via-pink-600 to-rose-600 p-6 text-white">
+              <div className="relative bg-gradient-to-r from-purple-600 via-pink-600 to-rose-600 p-6 text-white flex-shrink-0">
                 <button
                   onClick={onClose}
                   className="absolute top-4 right-4 w-8 h-8 bg-white/20 hover:bg-white/30 rounded-full 
@@ -127,7 +127,7 @@ export const PremiumModal: React.FC<PremiumModalProps> = ({
               </div>
 
               {/* Tabs */}
-              <div className="border-b border-gray-200 dark:border-gray-700">
+              <div className="border-b border-gray-200 dark:border-gray-700 flex-shrink-0">
                 <div className="flex">
                   {tabs.map((tab) => {
                     const Icon = tab.icon;
@@ -150,8 +150,8 @@ export const PremiumModal: React.FC<PremiumModalProps> = ({
                 </div>
               </div>
 
-              {/* Content */}
-              <div className="p-6 overflow-y-auto max-h-96">
+              {/* Scrollable Content */}
+              <div className="flex-1 overflow-y-auto p-6">
                 {activeTab === 'plans' && (
                   <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                     {SUBSCRIPTION_TIERS.map((tier) => (
@@ -289,7 +289,7 @@ export const PremiumModal: React.FC<PremiumModalProps> = ({
               </div>
 
               {/* Footer */}
-              <div className="border-t border-gray-200 dark:border-gray-700 p-6 bg-gray-50 dark:bg-gray-800/50 text-center">
+              <div className="border-t border-gray-200 dark:border-gray-700 p-6 bg-gray-50 dark:bg-gray-800/50 text-center flex-shrink-0">
                 <p className="text-sm text-gray-600 dark:text-gray-400 font-mono mb-2">
                   "Unlock premium features to enhance your emotional journey" ✨
                 </p>

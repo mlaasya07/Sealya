@@ -1,6 +1,6 @@
 import React from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { X, BookOpen, Calendar, Heart, TrendingUp } from 'lucide-react';
+import { X, BookOpen, Calendar, Heart, TrendingUp, AlertTriangle } from 'lucide-react';
 import { Letter, EMOJI_SEALS } from '../types/Letter';
 
 interface ProfileModalProps {
@@ -88,6 +88,29 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({
               </div>
             </div>
 
+            {/* Important Warning */}
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              className="mx-6 mt-6 p-4 bg-gradient-to-r from-orange-50 to-red-50 dark:from-orange-900/20 dark:to-red-900/20 
+                         border border-orange-200 dark:border-orange-700 rounded-xl"
+            >
+              <div className="flex items-start space-x-3">
+                <AlertTriangle className="w-5 h-5 text-orange-600 dark:text-orange-400 flex-shrink-0 mt-0.5" />
+                <div>
+                  <h3 className="font-bold text-orange-900 dark:text-orange-100 text-sm mb-1">
+                    Important Data Warning
+                  </h3>
+                  <p className="text-orange-800 dark:text-orange-200 text-sm font-mono leading-relaxed">
+                    ⚠️ If you delete your browsing data, your letters will be lost forever.
+                  </p>
+                  <p className="text-orange-700 dark:text-orange-300 text-xs font-mono mt-2">
+                    Your letters are stored locally on this device only. Consider exporting them regularly as backup.
+                  </p>
+                </div>
+              </div>
+            </motion.div>
+
             {/* Stats */}
             <div className="p-6 space-y-6">
               <div className="grid grid-cols-2 gap-4">
@@ -95,6 +118,7 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({
                 <motion.div
                   initial={{ opacity: 0, y: 20 }}
                   animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: 0.1 }}
                   className="bg-pink-50 dark:bg-fuchsia-900/30 rounded-2xl p-4 text-center"
                 >
                   <BookOpen className="w-6 h-6 text-pink-600 dark:text-fuchsia-400 mx-auto mb-2" />
@@ -106,7 +130,7 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({
                 <motion.div
                   initial={{ opacity: 0, y: 20 }}
                   animate={{ opacity: 1, y: 0 }}
-                  transition={{ delay: 0.1 }}
+                  transition={{ delay: 0.2 }}
                   className="bg-rose-50 dark:bg-pink-900/30 rounded-2xl p-4 text-center"
                 >
                   <Calendar className="w-6 h-6 text-rose-600 dark:text-pink-400 mx-auto mb-2" />
@@ -120,7 +144,7 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({
                 <motion.div
                   initial={{ opacity: 0, y: 20 }}
                   animate={{ opacity: 1, y: 0 }}
-                  transition={{ delay: 0.2 }}
+                  transition={{ delay: 0.3 }}
                   className="bg-blue-50 dark:bg-blue-900/30 rounded-2xl p-4"
                 >
                   <div className="flex items-center justify-between">
@@ -143,7 +167,7 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({
                 <motion.div
                   initial={{ opacity: 0, y: 20 }}
                   animate={{ opacity: 1, y: 0 }}
-                  transition={{ delay: 0.3 }}
+                  transition={{ delay: 0.4 }}
                   className="bg-green-50 dark:bg-green-900/30 rounded-2xl p-4"
                 >
                   <div className="flex items-center justify-between">
@@ -168,7 +192,7 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({
                 <motion.div
                   initial={{ opacity: 0, y: 20 }}
                   animate={{ opacity: 1, y: 0 }}
-                  transition={{ delay: 0.4 }}
+                  transition={{ delay: 0.5 }}
                   className="bg-pink-50 dark:bg-fuchsia-900/30 rounded-2xl p-4"
                 >
                   <h3 className="text-sm font-mono text-pink-700 dark:text-fuchsia-300 mb-3">Seal Collection</h3>
