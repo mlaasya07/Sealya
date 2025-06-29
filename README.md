@@ -40,9 +40,8 @@
 
 ---
 
-## 📸 Screenshots
-
-> *Coming soon after final UI polish*
+## 📸 Youtube Link
+> [Watch the demo on YouTube] (https://youtu.be/SYUp9PHAfVo)
 
 ---
 
