@@ -49,6 +49,7 @@ export default {
       animation: {
         'float': 'float 6s ease-in-out infinite',
         'sparkle': 'sparkle 2s ease-in-out infinite',
+        'crack': 'crack 0.5s ease-out',
       },
       keyframes: {
         float: {
@@ -59,6 +60,14 @@ export default {
           '0%, 100%': { opacity: '0.5', transform: 'scale(1)' },
           '50%': { opacity: '1', transform: 'scale(1.1)' },
         },
+        crack: {
+          '0%': { transform: 'scale(1) rotate(0deg)', opacity: '1' },
+          '50%': { transform: 'scale(1.1) rotate(5deg)', opacity: '0.8' },
+          '100%': { transform: 'scale(1.2) rotate(0deg)', opacity: '0' },
+        },
+      },
+      backdropBlur: {
+        xs: '2px',
       },
     },
   },

@@ -1,6 +1,6 @@
 import React from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { X, Moon, Sun } from 'lucide-react';
+import { X, Moon, Sun, Clock, Sunrise } from 'lucide-react';
 import { useTheme } from '../contexts/ThemeContext';
 
 interface SettingsModalProps {
@@ -12,7 +12,43 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
   isOpen,
   onClose,
 }) => {
-  const { theme, toggleTheme } = useTheme();
+  const { theme, themeMode, timeFormat, currentTime, setThemeMode, setTimeFormat } = useTheme();
+
+  const getThemeIcon = () => {
+    switch (themeMode) {
+      case 'light':
+        return <Sun className="w-5 h-5" />;
+      case 'dark':
+        return <Moon className="w-5 h-5" />;
+      case 'sync':
+        return <Sunrise className="w-5 h-5" />;
+      default:
+        return <Sun className="w-5 h-5" />;
+    }
+  };
+
+  const getThemeLabel = () => {
+    switch (themeMode) {
+      case 'light':
+        return 'Always Light';
+      case 'dark':
+        return 'Always Dark';
+      case 'sync':
+        return 'Sync with Clock';
+      default:
+        return 'Light Mode';
+    }
+  };
+
+  const cycleThemeMode = () => {
+    if (themeMode === 'light') {
+      setThemeMode('dark');
+    } else if (themeMode === 'dark') {
+      setThemeMode('sync');
+    } else {
+      setThemeMode('light');
+    }
+  };
 
   return (
     <AnimatePresence>
@@ -55,28 +91,55 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
 
             {/* Settings */}
             <div className="p-6 space-y-6">
-              {/* Theme Toggle */}
+              {/* Theme Mode */}
               <div className="flex items-center justify-between">
                 <div className="flex items-center space-x-3">
-                  <div className="w-10 h-10 bg-pink-100 dark:bg-fuchsia-900/50 rounded-full flex items-center justify-center">
-                    {theme === 'light' ? (
-                      <Sun className="w-5 h-5 text-pink-600 dark:text-fuchsia-400" />
-                    ) : (
-                      <Moon className="w-5 h-5 text-pink-600 dark:text-fuchsia-400" />
-                    )}
+                  <div className="w-10 h-10 bg-pink-100 dark:bg-fuchsia-900/50 rounded-full flex items-center justify-center text-pink-600 dark:text-fuchsia-400">
+                    {getThemeIcon()}
                   </div>
                   <div>
                     <h3 className="font-mono text-pink-900 dark:text-fuchsia-100 font-semibold">Theme</h3>
                     <p className="text-sm text-pink-600 dark:text-fuchsia-300 font-mono">
-                      {theme === 'light' ? 'Light mode' : 'Dark mode'}
+                      {getThemeLabel()}
                     </p>
                   </div>
                 </div>
 
                 <motion.button
-                  onClick={toggleTheme}
+                  onClick={cycleThemeMode}
+                  className="relative w-16 h-8 rounded-full bg-pink-200 dark:bg-fuchsia-800 transition-colors"
+                  whileTap={{ scale: 0.95 }}
+                >
+                  <motion.div
+                    className="absolute top-1 w-6 h-6 bg-white rounded-full shadow-md flex items-center justify-center"
+                    animate={{
+                      x: themeMode === 'light' ? 2 : themeMode === 'dark' ? 18 : 34,
+                    }}
+                    transition={{ type: "spring", stiffness: 500, damping: 30 }}
+                  >
+                    {getThemeIcon()}
+                  </motion.div>
+                </motion.button>
+              </div>
+
+              {/* Time Format */}
+              <div className="flex items-center justify-between">
+                <div className="flex items-center space-x-3">
+                  <div className="w-10 h-10 bg-pink-100 dark:bg-fuchsia-900/50 rounded-full flex items-center justify-center">
+                    <Clock className="w-5 h-5 text-pink-600 dark:text-fuchsia-400" />
+                  </div>
+                  <div>
+                    <h3 className="font-mono text-pink-900 dark:text-fuchsia-100 font-semibold">Time Format</h3>
+                    <p className="text-sm text-pink-600 dark:text-fuchsia-300 font-mono">
+                      {timeFormat === '12h' ? '12-hour format' : '24-hour format'}
+                    </p>
+                  </div>
+                </div>
+
+                <motion.button
+                  onClick={() => setTimeFormat(timeFormat === '12h' ? '24h' : '12h')}
                   className={`relative w-14 h-8 rounded-full transition-colors ${
-                    theme === 'dark' 
+                    timeFormat === '24h' 
                       ? 'bg-fuchsia-500' 
                       : 'bg-pink-200'
                   }`}
@@ -85,18 +148,46 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
                   <motion.div
                     className="absolute top-1 w-6 h-6 bg-white rounded-full shadow-md flex items-center justify-center"
                     animate={{
-                      x: theme === 'dark' ? 24 : 2,
+                      x: timeFormat === '24h' ? 24 : 2,
                     }}
                     transition={{ type: "spring", stiffness: 500, damping: 30 }}
                   >
-                    {theme === 'light' ? (
-                      <Sun className="w-3 h-3 text-pink-500" />
-                    ) : (
-                      <Moon className="w-3 h-3 text-fuchsia-500" />
-                    )}
+                    <span className="text-xs font-mono font-bold text-pink-600 dark:text-fuchsia-600">
+                      {timeFormat === '12h' ? '12' : '24'}
+                    </span>
                   </motion.div>
                 </motion.button>
               </div>
+
+              {/* Current Time Display */}
+              <div className="bg-pink-50 dark:bg-fuchsia-900/30 rounded-2xl p-4 text-center">
+                <div className="text-sm font-mono text-pink-600 dark:text-fuchsia-400 mb-1">Current Time</div>
+                <div className="text-2xl font-mono font-bold text-pink-900 dark:text-fuchsia-100">
+                  {currentTime}
+                </div>
+              </div>
+
+              {/* Sync Mode Info */}
+              {themeMode === 'sync' && (
+                <motion.div
+                  initial={{ opacity: 0, height: 0 }}
+                  animate={{ opacity: 1, height: 'auto' }}
+                  exit={{ opacity: 0, height: 0 }}
+                  className="bg-gradient-to-r from-pink-50 to-rose-50 dark:from-fuchsia-900/30 dark:to-pink-900/30 
+                             rounded-2xl p-4 border border-pink-200 dark:border-fuchsia-700"
+                >
+                  <div className="flex items-center space-x-2 mb-2">
+                    <Sunrise className="w-4 h-4 text-pink-600 dark:text-fuchsia-400" />
+                    <span className="text-sm font-mono font-semibold text-pink-800 dark:text-fuchsia-200">
+                      Dynamic Theme Active
+                    </span>
+                  </div>
+                  <p className="text-xs font-mono text-pink-600 dark:text-fuchsia-300 leading-relaxed">
+                    Theme automatically transitions from light pink + white during the day to pure black + fuchsia pink at night, 
+                    creating a gentle shift that matches your natural rhythm.
+                  </p>
+                </motion.div>
+              )}
             </div>
 
             {/* Footer */}

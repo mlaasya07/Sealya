@@ -1,14 +1,16 @@
 import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Filter, SortDesc, Search } from 'lucide-react';
+import { Filter, SortDesc, Search, Star, Download, Calendar } from 'lucide-react';
 import { Letter, EMOJI_SEALS } from '../types/Letter';
 import { LetterCard } from './LetterCard';
+import { exportAllLettersAsZip } from '../utils/exportUtils';
 
 interface LetterLibraryProps {
   letters: Letter[];
   onLetterClick: (letter: Letter) => void;
   onPrintLetter: (letter: Letter) => void;
   onDeleteLetter: (id: string) => void;
+  onToggleFavorite: (id: string) => void;
 }
 
 export const LetterLibrary: React.FC<LetterLibraryProps> = ({
@@ -16,10 +18,13 @@ export const LetterLibrary: React.FC<LetterLibraryProps> = ({
   onLetterClick,
   onPrintLetter,
   onDeleteLetter,
+  onToggleFavorite,
 }) => {
   const [filterEmoji, setFilterEmoji] = useState<string>('');
-  const [sortBy, setSortBy] = useState<'date' | 'title'>('date');
+  const [sortBy, setSortBy] = useState<'date' | 'title' | 'favorites'>('date');
   const [searchTerm, setSearchTerm] = useState('');
+  const [showFavoritesOnly, setShowFavoritesOnly] = useState(false);
+  const [isExporting, setIsExporting] = useState(false);
 
   const sealedLetters = letters.filter(letter => letter.isSealed);
 
@@ -30,14 +35,39 @@ export const LetterLibrary: React.FC<LetterLibraryProps> = ({
         letter.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
         letter.label.toLowerCase().includes(searchTerm.toLowerCase()) ||
         letter.content.toLowerCase().includes(searchTerm.toLowerCase());
-      return matchesEmoji && matchesSearch;
+      const matchesFavorites = !showFavoritesOnly || letter.isFavorite;
+      return matchesEmoji && matchesSearch && matchesFavorites;
     })
     .sort((a, b) => {
       if (sortBy === 'date') {
         return b.timestamp.getTime() - a.timestamp.getTime();
+      } else if (sortBy === 'favorites') {
+        if (a.isFavorite && !b.isFavorite) return -1;
+        if (!a.isFavorite && b.isFavorite) return 1;
+        return b.timestamp.getTime() - a.timestamp.getTime();
       }
       return a.title.localeCompare(b.title);
     });
+
+  const handleExportAll = async () => {
+    if (sealedLetters.length === 0) return;
+    
+    setIsExporting(true);
+    try {
+      await exportAllLettersAsZip(sealedLetters);
+    } catch (error) {
+      console.error('Failed to export letters:', error);
+      alert('Failed to export letters. Please try again.');
+    } finally {
+      setIsExporting(false);
+    }
+  };
+
+  const favoriteCount = sealedLetters.filter(letter => letter.isFavorite).length;
+  const lockedCount = sealedLetters.filter(letter => {
+    if (!letter.scheduledFor) return false;
+    return new Date() < new Date(letter.scheduledFor);
+  }).length;
 
   if (sealedLetters.length === 0) {
     return (
@@ -70,9 +100,21 @@ export const LetterLibrary: React.FC<LetterLibraryProps> = ({
           <h2 className="text-4xl font-bold text-pink-900 dark:text-fuchsia-100 mb-4">
             Your Seals
           </h2>
-          <p className="text-pink-600 dark:text-fuchsia-300 font-mono text-lg">
-            {sealedLetters.length} letter{sealedLetters.length !== 1 ? 's' : ''} safely sealed and stored
-          </p>
+          <div className="flex items-center justify-center space-x-6 text-pink-600 dark:text-fuchsia-300 font-mono text-sm">
+            <span>{sealedLetters.length} letter{sealedLetters.length !== 1 ? 's' : ''} sealed</span>
+            {favoriteCount > 0 && (
+              <span className="flex items-center space-x-1">
+                <Star className="w-4 h-4 fill-current text-yellow-500" />
+                <span>{favoriteCount} favorite{favoriteCount !== 1 ? 's' : ''}</span>
+              </span>
+            )}
+            {lockedCount > 0 && (
+              <span className="flex items-center space-x-1">
+                <Calendar className="w-4 h-4" />
+                <span>{lockedCount} scheduled</span>
+              </span>
+            )}
+          </div>
         </motion.div>
 
         {/* Filters and Search */}
@@ -98,6 +140,35 @@ export const LetterLibrary: React.FC<LetterLibraryProps> = ({
           </div>
 
           <div className="flex items-center space-x-4">
+            {/* Favorites Toggle */}
+            <motion.button
+              onClick={() => setShowFavoritesOnly(!showFavoritesOnly)}
+              className={`flex items-center space-x-2 px-3 py-2 rounded-lg font-mono text-sm transition-colors ${
+                showFavoritesOnly
+                  ? 'bg-yellow-100 dark:bg-yellow-900/50 text-yellow-800 dark:text-yellow-200'
+                  : 'bg-pink-50 dark:bg-fuchsia-900/30 text-pink-600 dark:text-fuchsia-400 hover:bg-pink-100 dark:hover:bg-fuchsia-900/50'
+              }`}
+              whileHover={{ scale: 1.02 }}
+              whileTap={{ scale: 0.98 }}
+            >
+              <Star className={`w-4 h-4 ${showFavoritesOnly ? 'fill-current' : ''}`} />
+              <span>Favorites</span>
+            </motion.button>
+
+            {/* Export All */}
+            <motion.button
+              onClick={handleExportAll}
+              disabled={isExporting || sealedLetters.length === 0}
+              className="flex items-center space-x-2 bg-green-100 dark:bg-green-900/50 hover:bg-green-200 dark:hover:bg-green-900/70 
+                         text-green-700 dark:text-green-300 px-3 py-2 rounded-lg font-mono text-sm transition-colors
+                         disabled:opacity-50 disabled:cursor-not-allowed"
+              whileHover={{ scale: 1.02 }}
+              whileTap={{ scale: 0.98 }}
+            >
+              <Download className="w-4 h-4" />
+              <span>{isExporting ? 'Exporting...' : 'Export All'}</span>
+            </motion.button>
+
             {/* Emoji Filter */}
             <div className="flex items-center space-x-2">
               <Filter className="w-5 h-5 text-pink-600 dark:text-fuchsia-400" />
@@ -120,13 +191,14 @@ export const LetterLibrary: React.FC<LetterLibraryProps> = ({
               <SortDesc className="w-5 h-5 text-pink-600 dark:text-fuchsia-400" />
               <select
                 value={sortBy}
-                onChange={(e) => setSortBy(e.target.value as 'date' | 'title')}
+                onChange={(e) => setSortBy(e.target.value as 'date' | 'title' | 'favorites')}
                 className="border border-pink-200 dark:border-fuchsia-700 rounded-lg px-3 py-2 focus:outline-none 
                            focus:ring-2 focus:ring-pink-500 dark:focus:ring-fuchsia-500 font-mono text-sm
                            bg-white dark:bg-gray-700 text-pink-900 dark:text-fuchsia-100"
               >
                 <option value="date">Date</option>
                 <option value="title">Title</option>
+                <option value="favorites">Favorites First</option>
               </select>
             </div>
           </div>
@@ -165,6 +237,7 @@ export const LetterLibrary: React.FC<LetterLibraryProps> = ({
                     onClick={() => onLetterClick(letter)}
                     onPrint={() => onPrintLetter(letter)}
                     onDelete={() => onDeleteLetter(letter.id)}
+                    onToggleFavorite={() => onToggleFavorite(letter.id)}
                   />
                 </motion.div>
               ))}
