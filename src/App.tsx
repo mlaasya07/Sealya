@@ -16,6 +16,7 @@ import { OnboardingFlow } from './components/OnboardingFlow';
 import { FloatingActionButton } from './components/FloatingActionButton';
 import { PremiumModal } from './components/PremiumModal';
 import { UsageLimitModal } from './components/UsageLimitModal';
+import { Footer } from './components/Footer';
 import { generateLetterPDF } from './utils/pdfExport';
 
 function AppContent() {
@@ -133,6 +134,9 @@ function AppContent() {
           onToggleFavorite={toggleFavorite}
         />
       </main>
+
+      {/* Footer - only on homepage */}
+      <Footer />
 
       <FloatingActionButton onClick={handleWriteClick} />
 
