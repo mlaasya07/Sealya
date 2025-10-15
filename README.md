@@ -32,7 +32,7 @@
 
 ## 🛠️ Tech Stack
 
-- **Frontend:** React (via [Bolt.new](https://bolt.new))
+- **Frontend:** React
 - **Styling:** Tailwind CSS
 - **Backend:** Supabase (auth + database)
 - **Payments:** Razorpay (for premium features)
